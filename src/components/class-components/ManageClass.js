@@ -1,5 +1,12 @@
 import {Avatar, Button, Card, Pagination, Table, Tabs, Tooltip} from "antd";
-import {DeleteOutlined, EditOutlined, EyeOutlined, UserOutlined} from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  UserAddOutlined,
+  UsergroupAddOutlined,
+  UserOutlined
+} from "@ant-design/icons";
 import {useHistory} from "react-router-dom";
 
 const ManageClass = () => {
@@ -25,8 +32,14 @@ const ManageClass = () => {
     },
     {
       title: "Form Teacher",
+      align: "center",
       dataIndex: "formTeacher",
       key: "formTeacher",
+    },{
+      title: "Total Student",
+      align: "center",
+      dataIndex: "studentNumber",
+      key: "studentNumber",
     },
     {
       title: "Action",
@@ -39,6 +52,12 @@ const ManageClass = () => {
             <Button type="primary" className="mr-2" icon={<EyeOutlined/>} size="small"
                     onClick={() => history.push(`/app/manage-system/class-detail`)}
             />
+          </Tooltip>
+          <Tooltip title="Add Form Teacher">
+            <Button className="mr-2" icon={<UserAddOutlined/>} size="small"/>
+          </Tooltip>
+          <Tooltip title="Add Students">
+            <Button className="mr-2" icon={<UsergroupAddOutlined/>} size="small"/>
           </Tooltip>
           <Tooltip title="Update">
             <Button type="info" className="mr-2" icon={<EditOutlined/>} size="small" onClick={() => {
