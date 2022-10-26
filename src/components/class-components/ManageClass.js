@@ -35,7 +35,7 @@ const ManageClass = () => {
       align: "center",
       dataIndex: "formTeacher",
       key: "formTeacher",
-    },{
+    }, {
       title: "Total Student",
       align: "center",
       dataIndex: "studentNumber",
@@ -77,7 +77,7 @@ const ManageClass = () => {
               dataSource={classes}
               rowKey={record => record._id}
               pagination={true}
-              />
+            />
           </div>
         </Tabs.TabPane>
         <Tabs.TabPane key={1} tab="Unit 11">

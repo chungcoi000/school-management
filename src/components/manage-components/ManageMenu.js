@@ -23,6 +23,11 @@ export const ManageMenu = (props) => {
           <span>Manage Class</span>
           <Link to={`${match.url}/manage-class`}/>
         </Menu.Item>
+        <Menu.Item key={`${match.url}/manage-timetable`}>
+          <ReadOutlined />
+          <span>Manage Timetable</span>
+          <Link to={`${match.url}/manage-timetable`}/>
+        </Menu.Item>
       </Menu>
     </div>
   )
