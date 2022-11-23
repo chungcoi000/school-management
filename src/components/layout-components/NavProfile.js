@@ -17,22 +17,6 @@ const menuItem = [
 		icon: EditOutlined ,
 		path: "/"
     },
-    
-    {
-		title: "Account Setting",
-		icon: SettingOutlined,
-		path: "/"
-    },
-    {
-		title: "Billing",
-		icon: ShopOutlined ,
-		path: "/"
-	},
-    {
-		title: "Help Center",
-		icon: QuestionCircleOutlined,
-		path: "/"
-	}
 ]
 
 export const NavProfile = ({signOut}) => {

@@ -1,33 +1,57 @@
-import {Avatar, Button, Card, Input, Modal, Pagination, Table, Tooltip} from "antd";
+import {Avatar, Button, Card, Input, Modal, Pagination, Table, Tabs, Tooltip} from "antd";
 import {useHistory} from "react-router-dom";
 import {DeleteOutlined, EditOutlined, EyeOutlined, UserAddOutlined, UserOutlined} from "@ant-design/icons";
+import React, {useEffect, useState} from "react";
+import ApiService from "../../services/ApiService";
 
 const {confirm} = Modal;
 
 const ManageUser = () => {
   const history = useHistory();
+  const [user, setUser] = useState([]);
+  const [type, setType] = useState("student");
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(10);
 
-  const users = [
-    {
-      _id: 1,
-      name: "Nguyen Van A",
-      avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Alex_Turner%2C_Way_Out_West_2018.jpg/640px-Alex_Turner%2C_Way_Out_West_2018.jpg",
-      email: "nguyenvana@gmail.com",
-      role: {id: 1, name: "Teacher"}
-    }, {
-      _id: 2,
-      name: "Nguyen Van B",
-      avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Alex_Turner%2C_Way_Out_West_2018.jpg/640px-Alex_Turner%2C_Way_Out_West_2018.jpg",
-      email: "nguyenvanb@gmail.com",
-      role: {id: 2, name: "Student"}
-    }, {
-      _id: 1,
-      name: "Nguyen Van A",
-      avatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Alex_Turner%2C_Way_Out_West_2018.jpg/640px-Alex_Turner%2C_Way_Out_West_2018.jpg",
-      email: "nguyenvana@gmail.com",
-      role: {id: 3, name: "Parent"}
+  console.log("types", type);
+
+  const getUsers = async (page) => {
+    try {
+      if (type === "student") {
+        const res = await ApiService.getStudents({page: page, limit: 10});
+        if (res.status === 200) {
+          setUser(res.data);
+          setPage(res.pagination.page);
+          setTotal(res.pagination.total);
+        }
+      }
+
+      if (type === "teacher") {
+        const res = await ApiService.getTeachers({page: page, limit: 10});
+        if (res.status === 200) {
+          setUser(res.data);
+          setPage(res.pagination.page);
+          setTotal(res.pagination.total);
+        }
+      }
+
+      if (type === "parents") {
+        const res = await ApiService.getParents({page: page, limit: 10});
+        if (res.status === 200) {
+          setUser(res.data);
+          setPage(res.pagination.page);
+          setTotal(res.pagination.total);
+        }
+      }
+    } catch (err) {
+      console.log("err", err);
     }
-  ]
+  }
+
+  useEffect(() => {
+    getUsers(page)
+  }, [type])
 
   const columns = [
     {
@@ -117,16 +141,23 @@ const ManageUser = () => {
         justifyContent: "space-between"
       }}>
         <Button type="primary" icon={<UserAddOutlined/>} onClick={() => {
-          history.replace({
-            pathname: `/app/add-user`,
-            mode: "ADD"
-          })
+          history.replace(`/app/add-user`,)
         }}>Add User</Button>
         <Input.Search style={{width: "30%"}} enterButton/>
       </div>
       <Card>
+        <Tabs
+          onTabClick={(tab) => {
+            setType(tab)
+          }}
+          defaultActiveKey="student"
+        >
+          <Tabs.TabPane tab="Student" key={`student`}></Tabs.TabPane>
+          <Tabs.TabPane tab="Teacher" key={`teacher`}></Tabs.TabPane>
+          <Tabs.TabPane tab="Parent" key={`parents`}></Tabs.TabPane>
+        </Tabs>
         <div className="table-responsive">
-          <Table columns={columns} dataSource={users} rowKey={record => record._id} pagination={false}
+          <Table columns={columns} dataSource={user} rowKey={record => record._id} pagination={false}
                  footer={() => {
                    return (
                      <Pagination/>

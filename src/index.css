@@ -73,3 +73,11 @@ code {
     height: 60px;
     border: 1px solid black;
 }
+
+#project-tab .ant-tabs-nav {
+    padding: 0 12px;
+}
+
+#project-tab .ant-tabs-nav::before {
+    border: none;
+}

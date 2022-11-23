@@ -12,6 +12,8 @@ export const AppViews = () => {
         <Route path={`${APP_PREFIX_PATH}/manage-system`} component={lazy(() => import(`./manage-system`))} />
         <Route path={`${APP_PREFIX_PATH}/add-user`} component={UserForm} />
         <Route path={`${APP_PREFIX_PATH}/edit-user/:id`} component={UserForm} />
+        <Route path={`${APP_PREFIX_PATH}/timetable`} component={UserForm} />
+        <Route path={`${APP_PREFIX_PATH}/class`} component={UserForm} />
         <Redirect from={`${APP_PREFIX_PATH}`} to={`${APP_PREFIX_PATH}/home`} />
       </Switch>
     </Suspense>

@@ -1,7 +1,10 @@
-import {Button, Card, Col, DatePicker, Form, Input, Row, Select} from "antd";
+import {Button, Card, Col, DatePicker, Form, Input, notification, Row, Select} from "antd";
 import {PageHeaderAlt} from "../layout-components/PageHeaderAlt";
 import Flex from "../shared-components/Flex";
-import {useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
+import ApiServices from "../../services/ApiService";
+import {Link} from "react-router-dom";
+import moment from "moment";
 
 const datePickerStyle = {
   width: '100%',
@@ -12,8 +15,35 @@ const UserForm = (props) => {
   const [roleType, setRoleType] = useState("");
   const [options, setOptions] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [mode, setMode] = useState(props?.location?.mode ?? "ADD")
   const searchTimeout = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    ApiServices.getRoles().then(response => {
+      if (mounted) {
+        setRoles(response.data);
+      }
+    })
+
+    ApiServices.getAllSubjects().then(response => {
+      if (mounted) {
+        setSubjects(response.data);
+      }
+    })
+
+    ApiServices.getUnits().then(response => {
+      if (mounted) {
+        console.log("response", response)
+        setUnits(response.data);
+      }
+    })
+
+    return () => mounted = false;
+  }, [])
 
   const handleSearchUser = async (value) => {
     try {
@@ -36,14 +66,57 @@ const UserForm = (props) => {
     setSelectedUsers(value);
   }
 
+  const onFinish = async (values) => {
+    setLoading(true);
+    let data = {
+      //required
+      email: values?.email,
+      name: values?.name,
+      password: values?.password,
+      role: values?.role,
+      //personal information
+      dob: values?.dob !== undefined ? moment(values?.dob).format("x") : moment().format("x"),
+      gender: values?.gender ?? "male",
+      identityNumber: values?.identityNumber ?? "unassigned",
+      address: values?.address ?? "unassigned",
+      phone: values?.phone ?? "unassigned",
+    }
+    if (values.role === "student") {
+      data = Object.assign({unit: values?.unit}, data)
+    }
+
+    if (values.role === "teacher") {
+      data = Object.assign({subject: values?.subject}, data)
+    }
+    try {
+      const res = await ApiServices.addUser(data);
+      console.log("res", res);
+      if (res.status === 200) {
+        notification.success({
+          message: res.message
+        });
+        form.resetFields();
+        setLoading(false);
+      } else {
+        notification.error({
+          message: res.message
+        })
+        setLoading(false);
+      }
+    } catch (err) {
+      console.log("err", err);
+      setLoading(false);
+    }
+  }
+
   return (
-    <Form layout="vertical" form={form} name="dynamic_rule">
+    <Form layout="vertical" form={form} name="dynamic_rule" onFinish={onFinish}>
       <PageHeaderAlt className="border-bottom">
         <div className="container">
           <Flex className="py-2" mobileFlex={false} justifyContent="between" alignItems="center">
             <h2 className="mb-3">Add User</h2>
             <div className="mb-3">
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={loading}>
                 Submit
               </Button>
             </div>
@@ -56,7 +129,7 @@ const UserForm = (props) => {
             <Card title="Requirement Information">
               <Form.Item
                 label="Full Name"
-                name="fullName"
+                name="name"
                 rules={[{required: true, message: 'Please input full name!'}]}
               >
                 <Input placeholder="Enter full name..."/>
@@ -69,39 +142,37 @@ const UserForm = (props) => {
                 <Input placeholder="Enter email..."/>
               </Form.Item>
               <Form.Item
-                label={mode === "ADD" ? "Password" : "Password (Optional)"}
+                label={"Password"}
                 name="password"
-                rules={mode === "ADD" ? [
+                rules={[
                   {
                     required: true,
                     message: "Please input password"
                   },
-                ] : []}
+                ]}
               >
                 <Input placeholder="Enter password..."/>
               </Form.Item>
-              {mode === "ADD" && (
-                <Form.Item
-                  label="Confirm Password"
-                  name="confirmPassword"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please input password"
+              <Form.Item
+                label="Confirm Password"
+                name="confirmPassword"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please input password"
+                  },
+                  ({getFieldValue}) => ({
+                    validator(rule, value) {
+                      if (!value || getFieldValue('password') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject('Passwords do not match!');
                     },
-                    ({getFieldValue}) => ({
-                      validator(rule, value) {
-                        if (!value || getFieldValue('password') === value) {
-                          return Promise.resolve();
-                        }
-                        return Promise.reject('Passwords do not match!');
-                      },
-                    })
-                  ]}
-                >
-                  <Input placeholder="Enter confirm password..."/>
-                </Form.Item>
-              )}
+                  })
+                ]}
+              >
+                <Input placeholder="Enter confirm password..."/>
+              </Form.Item>
               <Form.Item
                 label="Role"
                 name="role"
@@ -110,9 +181,13 @@ const UserForm = (props) => {
                 <Select placeholder="Select role..." onChange={(value) => {
                   setRoleType(value);
                 }}>
-                  <Select.Option style={{textTransform: "capitalize"}} value="student">Student</Select.Option>
-                  <Select.Option style={{textTransform: "capitalize"}} value="teacher">Teacher</Select.Option>
-                  <Select.Option style={{textTransform: "capitalize"}} value="parent">Parent</Select.Option>
+                  {roles.map((role, index) => {
+                    return (
+                      <Select.Option style={{textTransform: "capitalize"}} value={role.name}
+                                     key={role._id + index}><span
+                        style={{textTransform: "capitalize"}}>{role.name}</span></Select.Option>
+                    )
+                  })}
                 </Select>
               </Form.Item>
               {
@@ -122,25 +197,20 @@ const UserForm = (props) => {
                     name="subject"
                     rules={[{required: true, message: 'Please select subject!'}]}
                   >
-                    <Select placeholder="Select subject..." mode="multiple" allowClear>
-                      <Select.Option style={{textTransform: "capitalize"}} value="maths">Math</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="literature">Literature</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="foreign language">Foreign
-                        language</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="chemistry">Chemistry</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="physics">Physics</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="biology">Biology</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="technology">Technology</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="informatics">Informatics</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="civic education">Civic
-                        Education</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="history">History</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="geography">Geography</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="art">Art</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="physical education">Physical
-                        Education</Select.Option>
-                      <Select.Option style={{textTransform: "capitalize"}} value="national defense education">National
-                        Defense Education</Select.Option>
+                    <Select placeholder="Select subject...">
+                      {
+                        subjects.map((subject, index) => {
+                          return (
+                            <Select.Option
+                              style={{textTransform: "capitalize"}}
+                              key={subject._id + index}
+                              value={subject._id}
+                            >
+                              {subject.name}
+                            </Select.Option>
+                          )
+                        })
+                      }
                     </Select>
                   </Form.Item>
                 )
@@ -171,31 +241,39 @@ const UserForm = (props) => {
                   </Form.Item>
                 )
               }
-            </Card>
-          </Col>
-          <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
-            <Card title="Optional Information">
               {
                 roleType === "student" && (
                   <Form.Item
-                    label="Class"
-                    name="class"
+                    label="Unit"
+                    name="unit"
+                    rules={[{required: true, message: 'Please select unit!'}]}
                   >
                     <Select
                       allowClear
-                      labelInValue
                       placeholder="Select class"
-                      filterOption={false}
                       style={{width: '100%', minHeight: "inherit"}}
-                      optionLabelProp="title"
                     >
-                      <Select.Option value="10a1">10a1</Select.Option>
-                      <Select.Option value="10a1">10a2</Select.Option>
-                      <Select.Option value="10a1">10a3</Select.Option>
+                      {
+                        units.map((unit, index) => {
+                          return (
+                            <Select.Option
+                              style={{textTransform: "capitalize"}}
+                              key={unit._id + index}
+                              value={unit._id}
+                            >
+                              {unit.name}
+                            </Select.Option>
+                          )
+                        })
+                      }
                     </Select>
                   </Form.Item>
                 )
               }
+            </Card>
+          </Col>
+          <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+            <Card title="Optional Information">
               <Form.Item
                 label="Date of Birth"
                 name="dob"
@@ -203,12 +281,18 @@ const UserForm = (props) => {
                 <DatePicker style={datePickerStyle}/>
               </Form.Item>
               <Form.Item
+                name="phone"
+                label="Phone Number"
+              >
+                <Input placeholder="Enter phone number..."/>
+              </Form.Item>
+              <Form.Item
                 name="gender"
                 label="Gender"
               >
                 <Select placeholder="Select gender...">
-                  <Select.Option value="0">Male</Select.Option>
-                  <Select.Option value="1">Female</Select.Option>
+                  <Select.Option value="male">Male</Select.Option>
+                  <Select.Option value="female">Female</Select.Option>
                 </Select>
               </Form.Item>
               <Form.Item
