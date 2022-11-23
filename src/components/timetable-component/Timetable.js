@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import {Button, Form, Modal, Select} from "antd";
 
 var columnsHeaders =
-  ['#', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  ['#', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', "Saturday"];
 
 var rowsHeaders = [
   'Slot 1(8:00-8:45)', 'Slot 2(8:55-9:40)', 'Slot 3(9:50-11:35)', 'Slot 4(11:55-12:40)', 'Slot 5(12:50-13:35)'
