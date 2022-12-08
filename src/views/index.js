@@ -9,13 +9,16 @@ import {ConfigProvider} from 'antd';
 import {APP_PREFIX_PATH, AUTH_PREFIX_PATH} from 'configs/AppConfig'
 import useBodyClass from 'hooks/useBodyClass';
 import Loading from "../components/shared-components/Loading";
+import Cookies from 'js-cookie';
 
 const LoadData = () => {
+  const user = Cookies.get('user');
   const history = useHistory();
   useEffect(() => {
-    return history.replace(`${AUTH_PREFIX_PATH}/login`);
+    if (user === undefined) {
+      return history.replace(`${AUTH_PREFIX_PATH}/login`);
+    }
   }, []);
-
   return <></>
 }
 
@@ -39,7 +42,7 @@ export const Views = (props) => {
       messages={currentAppLocale.messages}>
       <ConfigProvider locale={currentAppLocale.antd} direction={direction}>
         <Suspense fallback={<LoadingData/>}>
-          {/*<LoadData/>*/}
+          <LoadData/>
           <Switch>
             <Route exact path="/">
               <Redirect to={APP_PREFIX_PATH}/>

@@ -1,13 +1,14 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { Link } from "react-router-dom";
-import { Menu, Grid } from "antd";
+import {Menu, Grid, notification} from "antd";
 import IntlMessage from "../util-components/IntlMessage";
 import Icon from "../util-components/Icon";
 import navigationConfig from "configs/NavigationConfig";
-import { connect } from "react-redux";
+import {connect, useSelector} from "react-redux";
 import { SIDE_NAV_LIGHT, NAV_TYPE_SIDE } from "constants/ThemeConstant";
 import utils from 'utils'
 import { onMobileNavToggle } from "redux/actions/Theme";
+import ApiServices from "../../services/ApiService";
 
 const { SubMenu } = Menu;
 const { useBreakpoint } = Grid;
@@ -30,13 +31,32 @@ const setDefaultOpen = (key) => {
 };
 
 const SideNavContent = (props) => {
-	const { sideNavTheme, routeInfo, hideGroupTitle, localization, onMobileNavToggle } = props;
+  const [user, setUser] = useState("");
+  const { sideNavTheme, routeInfo, hideGroupTitle, localization, onMobileNavToggle } = props;
 	const isMobile = !utils.getBreakPoint(useBreakpoint()).includes('lg')
 	const closeMobileNav = () => {
 		if (isMobile) {
 			onMobileNavToggle(false)
 		}
 	}
+
+  console.log("user", user);
+
+  const getUserInformation = async () => {
+    try {
+      const res = await ApiServices.getSelfInformation();
+      setUser(res.user);
+    } catch (err) {
+      console.log("err", err);
+      notification.error({message: "Something error"});
+    }
+  }
+
+  useEffect(() => {
+    getUserInformation().then(_ => {
+    })
+  }, []);
+
   return (
     <Menu
       theme={sideNavTheme === SIDE_NAV_LIGHT ? "light" : "dark"}
@@ -48,11 +68,17 @@ const SideNavContent = (props) => {
     >
       {navigationConfig.map((menu) =>
         menu.submenu.length > 0 ? (
-          <Menu.ItemGroup
+          <SubMenu
             key={menu.key}
-            title={setLocale(localization, menu.title)}
+            title={menu.title}
+            icon={menu.icon ? <Icon type={menu?.icon} /> : null}
           >
-            {menu.submenu.map((subMenuFirst) =>
+            {(user?.role === "teacher"
+                ? menu.submenu
+                : menu.submenu.filter((x) =>
+                  ["classTimetable"].includes(x.key)
+                )
+            ).map((subMenuFirst) =>
               subMenuFirst.submenu.length > 0 ? (
                 <SubMenu
                   icon={
@@ -61,7 +87,8 @@ const SideNavContent = (props) => {
                     ) : null
                   }
                   key={subMenuFirst.key}
-                  title={setLocale(localization, subMenuFirst.title)}
+                  // title={setLocale(localization, subMenuFirst.title)}
+                  title={subMenuFirst.title}
                 >
                   {subMenuFirst.submenu.map((subMenuSecond) => (
                     <Menu.Item key={subMenuSecond.key}>
@@ -69,26 +96,35 @@ const SideNavContent = (props) => {
                         <Icon type={subMenuSecond?.icon} />
                       ) : null}
                       <span>
-                        {setLocale(localization, subMenuSecond.title)}
+                        {/* {setLocale(localization, subMenuSecond.title)} */}
+                        {subMenuSecond.title}
                       </span>
-                      <Link onClick={() => closeMobileNav()} to={subMenuSecond.path} />
+                      <Link
+                        onClick={() => closeMobileNav()}
+                        to={subMenuSecond.path}
+                      />
                     </Menu.Item>
                   ))}
                 </SubMenu>
               ) : (
                 <Menu.Item key={subMenuFirst.key}>
                   {subMenuFirst.icon ? <Icon type={subMenuFirst.icon} /> : null}
-                  <span>{setLocale(localization, subMenuFirst.title)}</span>
-                  <Link onClick={() => closeMobileNav()} to={subMenuFirst.path} />
+                  <span>{subMenuFirst.title}</span>
+                  <Link
+                    onClick={() => closeMobileNav()}
+                    to={subMenuFirst.path}
+                  />
                 </Menu.Item>
               )
             )}
-          </Menu.ItemGroup>
+          </SubMenu>
         ) : (
           <Menu.Item key={menu.key}>
             {menu.icon ? <Icon type={menu?.icon} /> : null}
-            <span>{setLocale(localization, menu?.title)}</span>
-            {menu.path ? <Link onClick={() => closeMobileNav()} to={menu.path} /> : null}
+            <span>{menu?.title}</span>
+            {menu.path ? (
+              <Link onClick={() => closeMobileNav()} to={menu.path} />
+            ) : null}
           </Menu.Item>
         )
       )}

@@ -1,180 +1,266 @@
-import {Card, Form, Modal, Select, Space, Table, Tag} from "antd";
-import {useState} from "react";
+import {Card, Form, Modal, notification, Select, Space, Table, Tag, Tooltip} from "antd";
+import React, {useEffect, useState} from "react";
+import ApiServices from "../../services/ApiService";
+import Flex from "../shared-components/Flex";
+import {BookOutlined, UserOutlined} from "@ant-design/icons";
+import {useHistory} from "react-router-dom";
 
-const data = [
-  {
-    _id: "1",
-    name: 'Jim Green',
-    age: 42,
-    address: 'London No. 1 Lake Park',
-  },
-  {
-    _id: "2",
-    name: 'Jim Green',
-    age: 42,
-    address: 'London No. 1 Lake Park',
-  },
-  {
-    _id: "3",
-    name: 'Joe Black',
-    age: 32,
-    address: 'Sidney No. 1 Lake Park',
-  }, {
-    _id: "4",
-    name: 'Joe Black',
-    age: 32,
-    address: 'Sidney No. 1 Lake Park',
-  }, {
-    _id: "5",
-    name: 'Joe Black',
-    age: 32,
-    address: 'Sidney No. 1 Lake Park',
-  },
-];
+const ClassTimetable = () => {
+  const [classInfo, setClassInfo] = useState("");
+  const [timetables, setTimetables] = useState([]);
+  const history = useHistory();
 
-const Timetable2 = () => {
-  const [open, setOpen] = useState(false);
-  const [slot, setSlot] = useState(0);
-  const [day, setDay] = useState("");
-  const [subject, setSubject] = useState("");
-  const [teacher, setTeacher] = useState("");
-  const [form] = Form.useForm();
+  let index = 1;
 
+  useEffect(async () => {
+    let mounted = true;
+    const response = await ApiServices.getUserClass();
+    if (response.status !== 200) {
+      notification.error({message: "No class assign to user"});
+    }
+    if (mounted) {
+      setClassInfo(response.data)
+    }
+    return () => mounted = false;
+  }, [])
+
+  useEffect(async () => {
+    if (classInfo !== "") {
+      try {
+        const res = await ApiServices.getClassTimetable(classInfo?._id);
+        console.log('res', res);
+        setTimetables(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  }, [classInfo])
 
   const columns = [
     {
       key: '_id',
-      render: (record) => (
-        <p style={{fontWeight: "bold", textAlign: "center"}}>Slot {record._id}</p>
+      render: (_) => (
+        <p style={{fontWeight: "bold", textAlign: "center"}}>Slot {index++}</p>
       )
     },
     {
       title: 'Monday',
-      key: 'name',
+      key: 'monday',
       align: "center",
+      width: '15%',
       render: (record) => (
-        <Card hoverable style={{border: 0}} onClick={() => {
-          setOpen(true);
-          // setDay(record.name)
-        }}>Test</Card>
+        <Card style={{border: 0}}>
+
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3">
+                <Tooltip title="Subject">
+                  <BookOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 "
+                    style={{textTransform: "capitalize"}}>{(record.length === 0 || record[0] === undefined) ? "No data" : record[0]?.class_slotID?.subjectID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3" style={{cursor: "pointer"}}
+                   onClick={() => record[0] !== "" ? history.push(`/app/profile/${record[0]?.class_slotID?.teacherID?._id}`) : null}
+              >
+                <Tooltip title="Teacher">
+                  <UserOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 ">{(record.length === 0 || record[0] === "") ? "No data" : record[0]?.class_slotID?.teacherID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+        </Card>
       ),
     },
     {
       title: 'Tuesday',
-      key: 'age',
+      key: 'tuesday',
       align: "center",
+      width: '15%',
       render: (record) => (
-        <Card hoverable style={{border: 0}} onClick={() => {
-          setOpen(true);
-          // setDay(record.name)
-        }}>Test</Card>
+        <Card style={{border: 0}}>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3">
+                <Tooltip title="Subject">
+                  <BookOutlined className="font-size-md"/>
+                  <span
+                    className="ml-1"
+                    style={{textTransform: "capitalize"}}>{(record.length === 0 || record[1] === undefined) ? "No data" : record[1]?.class_slotID?.subjectID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3" style={{cursor: "pointer"}}
+                   onClick={() => record[1] !== undefined ? history.push(`/app/profile/${record[1]?.class_slotID?.teacherID?._id}`) : null}
+              >
+                <Tooltip title="Teacher">
+                  <UserOutlined className="font-size-md"/>
+                  <span
+                    className="ml-1">{(record.length === 0 || record[1] === undefined) ? "No data" : record[1]?.class_slotID?.teacherID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+        </Card>
       ),
     },
     {
       title: 'Wednesday',
       key: 'wednesday',
       align: "center",
+      width: '15%',
       render: (_, record) => (
-        <Card hoverable style={{border: 0}} onClick={() => {
-          setOpen(true);
-          // setDay(record.name)
-        }}>Test</Card>
+        <Card style={{border: 0}}>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3">
+                <Tooltip title="Subject">
+                  <BookOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 "
+                    style={{textTransform: "capitalize"}}>{(record.length === 0 || record[2] === undefined) ? "No data" : record[2]?.class_slotID?.subjectID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3" style={{cursor: "pointer"}}
+                   onClick={() => record[2] !== undefined ? history.push(`/app/profile/${record[2]?.class_slotID?.teacherID?._id}`) : null}
+              >
+                <Tooltip title="Teacher">
+                  <UserOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 ">{(record.length === 0 || record[2] === undefined) ? "No data" : record[2]?.class_slotID?.teacherID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+        </Card>
       ),
-    }, {
+    },
+    {
       title: 'Thursday',
-      dataIndex: 'address',
-      key: 'address',
+      key: 'thursday',
       align: "center",
+      width: '15%',
       render: (_, record) => (
-        <Card hoverable style={{border: 0}} onClick={() => {
-          setOpen(true);
-          // setDay(record.name)
-        }}>Test</Card>
+        <Card style={{border: 0}}>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3">
+                <Tooltip title="Subject">
+                  <BookOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 "
+                    style={{textTransform: "capitalize"}}>{(record.length === 0 || record[3] === undefined) ? "No data" : record[3]?.class_slotID?.subjectID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3" style={{cursor: "pointer"}}
+                   onClick={() => record[3] !== undefined ? history.push(`/app/profile/${record[3]?.class_slotID?.teacherID?._id}`) : null}
+              >
+                <Tooltip title="Teacher">
+                  <UserOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 ">{(record.length === 0 || record[3] === undefined) ? "No data" : record[3]?.class_slotID?.teacherID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+        </Card>
       ),
-    }, {
+    },
+    {
       title: 'Friday',
-      dataIndex: 'address',
-      key: 'address',
+      key: 'friday',
       align: "center",
+      width: '15%',
       render: (_, record) => (
-        <Card hoverable onClick={() => {
-          setOpen(true);
-        }}>Test</Card>
+        <Card style={{border: 0}}>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3" style={{cursor: "pointer"}}
+                   onClick={() => record[4] !== undefined ? history.push(`/app/profile/${record[4]?.class_slotID?.teacherID?._id}`) : null}
+              >
+                <Tooltip title="Subject">
+                  <BookOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 "
+                    style={{textTransform: "capitalize"}}>{(record.length === 0 || record[4] === undefined) ? "No data" : record[4]?.class_slotID?.subjectID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3">
+                <Tooltip title="Teacher">
+                  <UserOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 ">{(record.length === 0 || record[4] === undefined) ? "No data" : record[4]?.class_slotID?.teacherID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+        </Card>
       ),
     },
     {
       title: 'Saturday',
-      key: 'tags',
-      dataIndex: 'tags',
+      key: 'saturday',
       align: "center",
-      render: (_, {tags}) => (
-        <Card hoverable style={{border: 0}} onClick={() => {
-          setOpen(true);
-        }}>Test</Card>
-
+      width: '15%',
+      render: (_, record) => (
+        <Card style={{border: 0}}>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3" style={{cursor: "pointer"}}
+                   onClick={() => record[5] !== undefined ? history.push(`/app/profile/${record[5]?.class_slotID?.teacherID?._id}`) : null}
+              >
+                <Tooltip title="Subject">
+                  <BookOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 "
+                    style={{textTransform: "capitalize"}}>{(record.length === 0 || record[5] === undefined) ? "No data" : record[5]?.class_slotID?.subjectID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+          <div className="mt-2">
+            <Flex justifyContent="center">
+              <div className="mr-3">
+                <Tooltip title="Teacher">
+                  <UserOutlined className=" font-size-md"/>
+                  <span
+                    className="ml-1 ">{(record.length === 0 || record[5] === undefined) ? "No data" : record[5]?.class_slotID?.teacherID?.name}</span>
+                </Tooltip>
+              </div>
+            </Flex>
+          </div>
+        </Card>
       ),
     },
   ];
 
   return (
     <Card>
-      <Table columns={columns} dataSource={data} pagination={false}/>
-      <Modal
-        visible={open}
-        title="Add subject"
-        onCancel={() => {
-          setOpen(false);
-          setSubject("");
-          setTeacher("");
-          form.resetFields();
-        }}
-        okButtonProps={{form: 'add-timetable-slot', htmlType: 'submit'}}
-      >
-        <Form form={form} name="add-timetable-slot" layout="vertical">
-          <Form.Item
-            label="Subject"
-            name="subject"
-            rules={[{required: true, message: 'Please select subject!'}]}
-          >
-            <Select placeholder="Select subject..." allowClear onChange={(value) => setSubject(value)}>
-              <Select.Option style={{textTransform: "capitalize"}} value="maths">Math</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="literature">Literature</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="foreign language">Foreign
-                language</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="chemistry">Chemistry</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="physics">Physics</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="biology">Biology</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="technology">Technology</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="informatics">Informatics</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="civic education">Civic
-                Education</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="history">History</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="geography">Geography</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="art">Art</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="physical education">Physical
-                Education</Select.Option>
-              <Select.Option style={{textTransform: "capitalize"}} value="national defense education">National
-                Defense Education</Select.Option>
-            </Select>
-          </Form.Item>
-          {
-            subject !== "" && (
-              <Form.Item
-                label="Teacher"
-                name="teacher"
-                rules={[{required: true, message: 'Please select teacher!'}]}
-              >
-                <Select placeholder="Select teacher..." allowClear onChange={(value) => setTeacher(value)}>
-                  <Select.Option style={{textTransform: "capitalize"}} value="maths">Nguyen Van A</Select.Option>
-                  <Select.Option style={{textTransform: "capitalize"}} value="literature">Nguyen Van B</Select.Option>
-                </Select>
-              </Form.Item>
-            )
-          }
-        </Form>
-      </Modal>
+      <Table columns={columns} dataSource={timetables} pagination={false}/>
     </Card>
   )
 }
 
-export default Timetable2
+export default ClassTimetable

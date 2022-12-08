@@ -1,9 +1,8 @@
 import React, {useEffect} from 'react';
 import {connect} from "react-redux";
-import {Button, Form, Input, Divider, Alert} from "antd";
+import {Button, Form, Input, Divider, Alert, notification} from "antd";
 import {MailOutlined, LockOutlined} from '@ant-design/icons';
 import PropTypes from 'prop-types';
-import Cookies from 'js-cookie'
 import {GoogleSVG, FacebookSVG} from 'assets/svg/icon';
 import CustomIcon from 'components/util-components/CustomIcon'
 import {
@@ -12,7 +11,6 @@ import {
   hideAuthMessage,
   authenticated
 } from 'redux/actions/Auth';
-import JwtAuthService from 'services/JwtAuthService'
 import {useHistory} from "react-router-dom";
 import {motion} from "framer-motion"
 import ApiServices from "../../../services/ApiService";
@@ -22,7 +20,6 @@ export const LoginForm = (props) => {
   let history = useHistory();
 
   const {
-    otherSignIn,
     showForgetPassword,
     hideAuthMessage,
     onForgetPasswordClick,
@@ -31,8 +28,6 @@ export const LoginForm = (props) => {
     loading,
     showMessage,
     message,
-    authenticated,
-    showAuthMessage,
     token,
     redirect,
     allowRedirect
@@ -40,11 +35,12 @@ export const LoginForm = (props) => {
 
   const onLogin = async values => {
     try {
-      const user = await ApiServices.login(values);
-      console.log("user", user);
-      setUserData(user);
-      if (user) {
+      const res = await ApiServices.login(values);
+      setUserData(res.data);
+      if (res.data) {
         history.push('/app/home');
+      } else {
+        notification.error({message: res.message})
       }
     } catch (err) {
       console.log(err);

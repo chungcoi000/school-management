@@ -81,3 +81,7 @@ code {
 #project-tab .ant-tabs-nav::before {
     border: none;
 }
+
+.new-post .ql-editor{
+    min-height: 200px;
+}

@@ -1,4 +1,4 @@
-import { SET_USER_DATA, CHANGE_USER_DATA } from "../constants/User";
+import {SET_USER_DATA, CHANGE_USER_DATA} from "../constants/User";
 
 const initialState = {
   address: "",
@@ -20,7 +20,7 @@ const initialState = {
 }
 
 const reducer = (state = initialState, action) => {
-  switch(action.type) {
+  switch (action.type) {
     case SET_USER_DATA:
       return {
         ...action.payload,

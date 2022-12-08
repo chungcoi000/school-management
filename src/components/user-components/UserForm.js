@@ -1,20 +1,20 @@
-import {Button, Card, Col, DatePicker, Form, Input, notification, Row, Select} from "antd";
+import {Avatar, Button, Card, Col, DatePicker, Form, Input, notification, Row, Select} from "antd";
 import {PageHeaderAlt} from "../layout-components/PageHeaderAlt";
 import Flex from "../shared-components/Flex";
 import {useCallback, useEffect, useRef, useState} from "react";
 import ApiServices from "../../services/ApiService";
 import {Link} from "react-router-dom";
 import moment from "moment";
+import IntlMessage from "../util-components/IntlMessage";
 
 const datePickerStyle = {
   width: '100%',
 }
 
-const UserForm = (props) => {
+const UserForm = () => {
   const [form] = Form.useForm();
   const [roleType, setRoleType] = useState("");
   const [options, setOptions] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const searchTimeout = useRef(null);
   const [loading, setLoading] = useState(false);
   const [subjects, setSubjects] = useState([]);
@@ -25,7 +25,8 @@ const UserForm = (props) => {
     let mounted = true;
     ApiServices.getRoles().then(response => {
       if (mounted) {
-        setRoles(response.data);
+        const data = response?.data?.filter((x) => x.name !== "admin");
+        setRoles(data);
       }
     })
 
@@ -37,7 +38,6 @@ const UserForm = (props) => {
 
     ApiServices.getUnits().then(response => {
       if (mounted) {
-        console.log("response", response)
         setUnits(response.data);
       }
     })
@@ -47,9 +47,33 @@ const UserForm = (props) => {
 
   const handleSearchUser = async (value) => {
     try {
-      setOptions(value ? options : []);
+      await ApiServices.searchUser({name: value, role: "student"}).then(res => {
+        let options = [...res.data].map(user => {
+          return ({
+            value: user._id,
+            name: user.name,
+            data: user,
+            label: (
+              <div className="search-list-item" style={{
+                display: "flex"
+              }}>
+                <div className="mr-3">
+                  <Avatar src={user?.avatar}/>
+                </div>
+                <div>
+                  <div className="font-weight-semibold"><IntlMessage id={`${user.name}`}/></div>
+                  <div className="font-size-sm text-muted">{user?.unit?.name} </div>
+                </div>
+              </div>
+            )
+          })
+        })
+        setOptions(value ? options : []);
+      }).catch(err => {
+        console.log(err)
+      })
     } catch (err) {
-      console.log(err);
+      console.log(err)
     }
   }
 
@@ -62,19 +86,13 @@ const UserForm = (props) => {
     }, 400);
   }
 
-  const handleSelectUser = (value, options) => {
-    setSelectedUsers(value);
-  }
-
   const onFinish = async (values) => {
     setLoading(true);
     let data = {
-      //required
       email: values?.email,
       name: values?.name,
       password: values?.password,
       role: values?.role,
-      //personal information
       dob: values?.dob !== undefined ? moment(values?.dob).format("x") : moment().format("x"),
       gender: values?.gender ?? "male",
       identityNumber: values?.identityNumber ?? "unassigned",
@@ -84,18 +102,20 @@ const UserForm = (props) => {
     if (values.role === "student") {
       data = Object.assign({unit: values?.unit}, data)
     }
-
     if (values.role === "teacher") {
       data = Object.assign({subject: values?.subject}, data)
     }
+    if (values.role === "parent") {
+      data = Object.assign({child: values?.child.value}, data)
+    }
     try {
       const res = await ApiServices.addUser(data);
-      console.log("res", res);
       if (res.status === 200) {
         notification.success({
           message: res.message
         });
         form.resetFields();
+        setRoleType("");
         setLoading(false);
       } else {
         notification.error({
@@ -218,24 +238,28 @@ const UserForm = (props) => {
               {
                 roleType === "parent" && (
                   <Form.Item
-                    label="Children"
-                    name="children"
-                    rules={[{required: true, message: 'Please select children!'}]}
+                    label="Child"
+                    name="child"
+                    rules={[{required: true, message: 'Please select child!'}]}
                   >
                     <Select
                       allowClear
-                      mode="multiple"
+                      showSearch
                       labelInValue
-                      placeholder="Select child"
+                      showArrow={false}
+                      dropdownClassName="nav-search-dropdown"
+                      placeholder="Search child..."
                       filterOption={false}
                       onSearch={handleChangeValueSearchUser}
-                      onChange={(value, option) => handleSelectUser(value, options)}
-                      style={{width: '100%', minHeight: "inherit"}}
-                      optionLabelProp="title"
                     >
-                      {options.map((option) => (
-                        <Select.Option key={option.value} value={option.value}
-                                       title={option.username}>{option.label}</Select.Option>
+                      {options.map(option => (
+                        <Select.Option
+                          key={option.value}
+                          value={option.value}
+                          title={option.username}
+                        >
+                          {option.label}
+                        </Select.Option>
                       ))}
                     </Select>
                   </Form.Item>

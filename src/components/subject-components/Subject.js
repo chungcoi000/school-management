@@ -84,7 +84,7 @@ const Subject = () => {
     }
   ];
 
-  const showDeleteConfirm = (slug) => {
+  const showDeleteConfirm = (id) => {
     return (
       confirm({
         title: 'Are you sure delete this subject?',
@@ -94,7 +94,7 @@ const Subject = () => {
         cancelText: 'No',
         onOk: async () => {
           try {
-            const res = await ApiService.deleteSubject(slug);
+            const res = await ApiService.deleteSubject(id);
             setSubjects((state) => state.filter((x) => x._id !== res.data._id));
             notification.success({
               message: res.message

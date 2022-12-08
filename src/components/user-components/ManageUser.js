@@ -1,4 +1,4 @@
-import {Avatar, Button, Card, Input, Modal, Pagination, Table, Tabs, Tooltip} from "antd";
+import {Avatar, Button, Card, Input, Modal, notification, Pagination, Spin, Table, Tabs, Tooltip} from "antd";
 import {useHistory} from "react-router-dom";
 import {DeleteOutlined, EditOutlined, EyeOutlined, UserAddOutlined, UserOutlined} from "@ant-design/icons";
 import React, {useEffect, useState} from "react";
@@ -11,18 +11,17 @@ const ManageUser = () => {
   const [user, setUser] = useState([]);
   const [type, setType] = useState("student");
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(10);
 
-  console.log("types", type);
-
-  const getUsers = async (page) => {
+  const getUsers = async (type, page) => {
     try {
+      setLoading(true);
       if (type === "student") {
         const res = await ApiService.getStudents({page: page, limit: 10});
         if (res.status === 200) {
           setUser(res.data);
-          setPage(res.pagination.page);
+          setCurrentPage(res.pagination.page);
           setTotal(res.pagination.total);
         }
       }
@@ -31,7 +30,7 @@ const ManageUser = () => {
         const res = await ApiService.getTeachers({page: page, limit: 10});
         if (res.status === 200) {
           setUser(res.data);
-          setPage(res.pagination.page);
+          setCurrentPage(res.pagination.page);
           setTotal(res.pagination.total);
         }
       }
@@ -40,18 +39,21 @@ const ManageUser = () => {
         const res = await ApiService.getParents({page: page, limit: 10});
         if (res.status === 200) {
           setUser(res.data);
-          setPage(res.pagination.page);
+          setCurrentPage(res.pagination.page);
           setTotal(res.pagination.total);
         }
       }
+
+      setLoading(false);
     } catch (err) {
       console.log("err", err);
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    getUsers(page)
-  }, [type])
+    getUsers(type, currentPage)
+  }, [type, currentPage]);
 
   const columns = [
     {
@@ -62,45 +64,31 @@ const ManageUser = () => {
       render: (record) => (
         <Avatar src={record} icon={<UserOutlined/>}/>
       )
-    },
-    {
+    }, {
       title: "Full Name",
       align: "center",
       dataIndex: "name",
       key: "fullName",
-    },
-    {
+    }, {
       title: "Email",
       dataIndex: "email",
+      align: "center",
       key: "email",
-    },
-    {
+    }, {
       title: "Role",
       dataIndex: "role",
       align: "center",
       key: "roles",
-      render: role => {
-        return (
-          <span>{role.name}</span>)
-      }
-    },
-    {
+    }, {
       title: "Action",
       dataIndex: "action",
       align: "center",
       key: "action",
       render: (_, record) => (
         <div className="text-right d-flex justify-content-center">
-          <Tooltip title="View">
-            <Button type="primary" className="mr-2" icon={<EyeOutlined/>} size="small"/>
-          </Tooltip>
           <Tooltip title="Update">
             <Button type="info" className="mr-2" icon={<EditOutlined/>} size="small" onClick={() => {
-              history.push({
-                pathname: "/app/edit-user/" + record._id,
-                data: record,
-                mode: "EDIT"
-              })
+              history.push("/app/edit-user/" + record._id)
             }}/>
           </Tooltip>
           <Tooltip title="Delete">
@@ -123,8 +111,18 @@ const ManageUser = () => {
           disabled: false,
         },
         cancelText: 'No',
-        onOk() {
-          console.log("Ok");
+        onOk: async () => {
+          try {
+            const res = await ApiService.deleteUser(userId);
+            if (res.status === 200) {
+              setUser((state) => state.filter((x) => x._id !== res.data._id));
+              notification.success({
+                message: res.message
+              })
+            }
+          } catch (e) {
+            console.log("e", e)
+          }
         },
         onCancel() {
           console.log('Cancel');
@@ -149,6 +147,7 @@ const ManageUser = () => {
         <Tabs
           onTabClick={(tab) => {
             setType(tab)
+            setCurrentPage(1);
           }}
           defaultActiveKey="student"
         >
@@ -157,12 +156,21 @@ const ManageUser = () => {
           <Tabs.TabPane tab="Parent" key={`parents`}></Tabs.TabPane>
         </Tabs>
         <div className="table-responsive">
-          <Table columns={columns} dataSource={user} rowKey={record => record._id} pagination={false}
-                 footer={() => {
-                   return (
-                     <Pagination/>
-                   )
-                 }}/>
+          <Spin spinning={loading} tip="Loading..." >
+            <Table
+              columns={columns}
+              dataSource={user}
+              rowKey={record => record._id}
+              pagination={{
+                pageSize: 10,
+                total,
+                onChange: (page) => {
+                  getUsers(type, page);
+                },
+                current: currentPage,
+              }}
+            />
+          </Spin>
         </div>
       </Card>
     </div>

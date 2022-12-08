@@ -9,14 +9,24 @@ import { toggleCollapsedNav, onMobileNavToggle } from 'redux/actions/Theme';
 import { NAV_TYPE_TOP, SIDE_NAV_COLLAPSED_WIDTH, SIDE_NAV_WIDTH } from 'constants/ThemeConstant';
 import utils from 'utils'
 import {NavProfile} from "./NavProfile";
-import NavNotification from "./NavNotification";
-import NavManege from "./NavManage";
+import NavManage from "./NavManage";
+import ApiServices from "../../services/ApiService";
 
 const { Header } = Layout;
 
 export const HeaderNav = props => {
+  const [user, setUser] = useState(null);
   const { navCollapsed, mobileNav, navType, headerNavColor, toggleCollapsedNav, onMobileNavToggle, isMobile, currentTheme, direction } = props;
-  const [searchActive, setSearchActive] = useState(false)
+  const [searchActive, setSearchActive] = useState(false);
+
+  useEffect(async () => {
+    let mounted = true;
+    const res = await ApiServices.getSelfInformation();
+    if (mounted) {
+      setUser(res.user);
+    }
+    return () => mounted = false;
+  }, [])
 
   const onSearchClose = () => {
     setSearchActive(false)
@@ -73,10 +83,12 @@ export const HeaderNav = props => {
             </ul>
           </div>
           <div className="nav-right">
-            <NavManege />
-            {/*<NavNotification />*/}
+            {
+              user?.role === "admin" && (
+                <NavManage />
+              )
+            }
             <NavProfile />
-            {/*<NavPanel direction={direction} />*/}
           </div>
           <NavSearch active={searchActive} close={onSearchClose}/>
         </div>
