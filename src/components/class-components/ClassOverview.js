@@ -9,7 +9,6 @@ const ClassOverview = () => {
   const [currentClass, setCurrentClass] = useState("");
   const [students, setStudents] = useState([]);
   const [attendances, setAttendances] = useState([]);
-  const [test, setTest] = useState();
 
   const getClassDetail = useCallback(async () => {
     try {
@@ -55,7 +54,7 @@ const ClassOverview = () => {
       align: "center",
       key: "avatar",
       render: (record) => (
-        <Avatar src={record} icon={<UserOutlined/>}/>
+        <Avatar src={`http://localhost:3000/public${record}`} icon={<UserOutlined/>}/>
       )
     },
     {

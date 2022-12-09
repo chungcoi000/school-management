@@ -49,7 +49,7 @@ export const NavProfile = () => {
     <div className="nav-profile nav-dropdown">
       <div className="nav-profile-header">
         <div className="d-flex">
-          <Avatar size={45} src={user?.avatar} icon={<UserOutlined />} />
+          <Avatar size={45} src={`http://localhost:3000/public${user?.avatar}`} icon={<UserOutlined />} />
           <div className="pl-3">
             <h4 className="mb-0">{user?.name}</h4>
             <span className="text-muted">{user?.role}</span>
@@ -82,7 +82,7 @@ export const NavProfile = () => {
     <Dropdown placement="bottomRight" overlay={profileMenu} trigger={["click"]}>
       <Menu className="d-flex align-item-center" mode="horizontal">
         <Menu.Item key="profile">
-          <Avatar src={user?.avatar} />
+          <Avatar src={`http://localhost:3000/public${user?.avatar}`} />
         </Menu.Item>
       </Menu>
     </Dropdown>

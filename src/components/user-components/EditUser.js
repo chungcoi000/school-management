@@ -1,6 +1,5 @@
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {Avatar, Button, Card, Col, DatePicker, Form, Input, notification, Row, Select, Spin, Tabs, Upload} from "antd";
-import Flex from "../shared-components/Flex";
 import ImgCrop from "antd-img-crop";
 import {CloudUploadOutlined, UploadOutlined, UserOutlined} from "@ant-design/icons";
 import {useRouteMatch} from "react-router-dom";
@@ -8,22 +7,16 @@ import ApiServices from "../../services/ApiService";
 import moment from "moment";
 import axios from "axios";
 import {API_BASE_URL} from "../../configs/AppConfig";
-import IntlMessage from "../util-components/IntlMessage";
-
-const ROW_GUTTER = 16;
-const dateFormat = "DD-MM-YYYY";
 
 const EditUser = () => {
   const {params} = useRouteMatch();
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatar, setAvatar] = useState("");
-  const [options, setOptions] = useState([]);
   const [roleType, setRoleType] = useState("student");
   const [units, setUnits] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [form] = Form.useForm();
-  const inputRef = useRef();
 
   useEffect(() => {
     let mounted = true;
@@ -101,47 +94,6 @@ const EditUser = () => {
     })();
   }, [getUser, params.id]);
 
-  const handleChangeValueSearchUser = async (value) => {
-    if (inputRef.current) {
-      clearTimeout(inputRef.current);
-    }
-    inputRef.current = setTimeout(() => {
-      handleSearchUser(value);
-    }, 400);
-  }
-
-  const handleSearchUser = async (value) => {
-    try {
-      await ApiServices.searchUser({name: value, role: "teacher"}).then(res => {
-        let options = [...res.data].map(user => {
-          return ({
-            value: user._id,
-            name: user.name,
-            data: user,
-            label: (
-              <div className="search-list-item" style={{
-                display: "flex"
-              }}>
-                <div className="mr-3">
-                  <Avatar src={user?.avatar}/>
-                </div>
-                <div>
-                  <div className="font-weight-semibold"><IntlMessage id={`${user.name}`}/></div>
-                  <div className="font-size-sm text-muted">{user?.subject?.name} </div>
-                </div>
-              </div>
-            )
-          })
-        })
-        setOptions(value ? options : []);
-      }).catch(err => {
-        console.log(err)
-      })
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
   const onSubmit = async (values) => {
     setLoading(true);
     let data = {
@@ -184,7 +136,7 @@ const EditUser = () => {
             <Col xs={24} lg={6}>
               <div className="d-flex justify-content-center">
                 <Avatar
-                  src={avatar}
+                  src={`http://localhost:3000/public${avatar}`}
                   shape="square"
                   icon={<UserOutlined/>}
                   size={200}
@@ -200,6 +152,7 @@ const EditUser = () => {
                       setUploadingAvatar(true);
                       try {
                         const formData = new FormData();
+                        formData.append('user', params?.id);
                         formData.append('avatar', file);
                         await axios.post(API_BASE_URL + '/users/updateAvatar', formData, {
                           headers: {
@@ -294,7 +247,7 @@ const EditUser = () => {
                         name="child"
                         rules={[{required: true, message: 'Please select child!'}]}
                       >
-                        <Input placeholder="Input child..." disabled />
+                        <Input placeholder="Input child..." disabled/>
                       </Form.Item>
                     )
                   }

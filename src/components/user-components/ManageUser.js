@@ -62,7 +62,7 @@ const ManageUser = () => {
       align: "center",
       key: "avatar",
       render: (record) => (
-        <Avatar src={record} icon={<UserOutlined/>}/>
+        <Avatar src={`http://localhost:3000/public${record}`} icon={<UserOutlined/>}/>
       )
     }, {
       title: "Full Name",

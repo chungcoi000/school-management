@@ -54,7 +54,7 @@ const Profile = (props) => {
                 <div className="d-md-flex">
                   <div className="rounded p-2 bg-white shadow-sm mx-auto"
                        style={{'marginTop': '-3.5rem', 'maxWidth': `166px`}}>
-                    <Avatar shape="square" size={150} src="" icon={<UserOutlined/>}/>
+                    <Avatar shape="square" size={150} src={`http://localhost:3000/public${user?.avatar}`} icon={<UserOutlined/>}/>
                   </div>
                   <div className="ml-md-4 w-100">
                     <Flex alignItems="center" mobileFlex={false} className="mb-3 text-md-left text-center">
